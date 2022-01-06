@@ -1,12 +1,12 @@
 <template>
   <div class="users">
-    <div class="containers">
+    <div class="container">
       <section>
         <h5 class="title">Novo usuário</h5>
       </section>
-      <form>
-        <input type="text" placeholder="Nome"/>
-        <input type="text" placeholder="Email"/>
+      <form @submit.prevent="createUser">
+        <input type="text" placeholder="Nome" v-model="form.name" />
+        <input type="text" placeholder="Email" v-model="form.email" />
         <button type="submit">Adicionar</button>
       </form>
       <section>
@@ -15,7 +15,7 @@
           <li v-for="user in users" v-bind:key="user.id">
             <p>{{ user.name }}</p>
             <small>{{ user.email }}</small>
-            <a href="#" class="destroy"></a>
+            <a class="destroy" @click="deleteUser(user.id)"></a>
           </li>
         </ul>
       </section>
@@ -39,6 +39,10 @@ export default defineComponent({
   data() {
     return {
       users: [] as User[],
+      form: {
+        name: "",
+        email: "",
+      },
     };
   },
 
@@ -50,10 +54,30 @@ export default defineComponent({
     async fetchUsers() {
       try {
         const response = await axios.get("/users");
-        console.log(response.data);
         this.users = response.data;
       } catch (error) {
         console.error(error);
+      }
+    },
+    async createUser() {
+      try {
+        const response = await axios.post("/users", this.form);
+        this.users = response.data;
+        this.form.name = "";
+        this.form.email = "";
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    async deleteUser(id: User['id']) {
+      try {
+        const response = axios.delete(`/users/${id}`);
+        if ((await response).status === 204) {
+          const userIndex = this.users.findIndex((user) => user.id === id);
+          this.users.splice(userIndex, 1);
+        }
+      } catch (error) {
+        console.log(error);
       }
     },
   },
